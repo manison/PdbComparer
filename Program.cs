@@ -145,7 +145,11 @@ namespace PdbComparer
                     Log.Debug(" OK - {Method} same", methodName);
 
                     // Just ensure that all sequence points in the same method belong to the same document
-                    return VerifyAllSequencePoints(otherMethod, methodName, Assembly_Second, s2.Document.Url);
+                    int errors = VerifyAllSequencePoints(otherMethod, methodName, Assembly_Second, s2.Document.Url);
+
+                    errors += CompareMethodVariables(method, otherMethod, methodName);
+
+                    return errors;
                 }
             }
         }
@@ -177,6 +181,25 @@ namespace PdbComparer
             return errors;
         }
 
+        private static int CompareMethodVariables(MethodDefinition method, MethodDefinition otherMethod, string methodName)
+        {
+            int errors = 0;
+            var variables = method.Body.Variables.Where(v => !String.IsNullOrEmpty(v.Name));
+            var otherVariables = otherMethod.Body.Variables.Where(v => !String.IsNullOrEmpty(v.Name) &&
+                v.Name != "Contract.Result()" &&
+                !v.Name.StartsWith("Contract.Old("));
+            if (variables.Any() || otherVariables.Any())
+            {
+                if (!variables.SequenceEqual(otherVariables, VariableDefinitionEqualityComparer.Default))
+                {
+                    Log.Error("List of variables differs in method {Method}", methodName);
+                    ++errors;
+                }
+            }
+
+            return errors;
+        }
+
         private static string GetMethodIdentifier(MethodDefinition method)
         {
             return method.FullName;
@@ -190,6 +213,29 @@ namespace PdbComparer
             };
             AssemblyDefinition assemblyDefinition = AssemblyDefinition.ReadAssembly(assemblyName, readerParameters);
             return assemblyDefinition;
+        }
+    }
+
+    internal sealed class VariableDefinitionEqualityComparer : IEqualityComparer<VariableDefinition>
+    {
+        public static readonly VariableDefinitionEqualityComparer Default = new VariableDefinitionEqualityComparer();
+
+        private VariableDefinitionEqualityComparer()
+        {
+        }
+
+        public bool Equals(VariableDefinition x, VariableDefinition y)
+        {
+            bool equal = 
+                   x.Name == y.Name &&
+                   x.Index == y.Index &&
+                   x.VariableType.FullName == y.VariableType.FullName;
+            return equal;
+        }
+
+        public int GetHashCode(VariableDefinition obj)
+        {
+            return obj.GetHashCode();
         }
     }
 }
