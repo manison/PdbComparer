@@ -26,8 +26,8 @@ namespace PdbComparer
             [Option(HelpText = "LogLevel.", DefaultValue = Serilog.Events.LogEventLevel.Warning)]
             public Serilog.Events.LogEventLevel LogLevel { get; set; }
 
-            [Option(HelpText = "Determine if line nr for first sequence points are compared", DefaultValue = true)]
-            public bool CompareLineNr { get; set; }
+            [Option(HelpText = "Determine if line nr for first sequence points are compared, enabled by default")]
+            public bool DisableLineNrComparison { get; set; }
         }
 
         const string Assembly_First = "First";
@@ -48,7 +48,7 @@ namespace PdbComparer
                 .WriteTo.ColoredConsole(options.LogLevel)
                 .WriteTo.File("PdbComparer.log", options.LogLevel)
                 .CreateLogger();
-            CompareLineNr = options.CompareLineNr;
+            CompareLineNr = !options.DisableLineNrComparison;
 
             AssemblyDefinition assemblyDefinition = LoadAssemblyDefinition(options.Source);
             AssemblyDefinition otherAssemblyDefinition = LoadAssemblyDefinition(options.Actual);

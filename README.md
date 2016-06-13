@@ -11,4 +11,4 @@ sometimes the pdb files have become out of sync and had methods declared in the 
 
 PdbComparer --Source "assembly1.dll" --Actual "assembly_rewritten.dll" --LogLevel Verbose
 
-PdbComparer --Source "assembly1.dll" --Actual "assembly_rewritten.dll" --LogLevel Debug --CompareLineNr false
+PdbComparer --Source "assembly1.dll" --Actual "assembly_rewritten.dll" --LogLevel Debug --DisableLineNrComparison
